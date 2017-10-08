@@ -1,0 +1,151 @@
+;(function(global, factory) {
+ 2     factory(global);
+ 3 }(typeof window !== "undefined" ? window : this, function(window, noGlobal) {
+ 4     var jQuery = function( selector, context ) {
+ 5         return new jQuery.fn.init( selector, context );
+ 6     };
+ 7     jQuery.fn = jQuery.prototype = {};
+ 8     // 核心方法
+ 9     // 回调系统
+10     // 异步队列
+11     // 数据缓存
+12     // 队列操作
+13     // 选择器引
+14     // 属性操作
+15     // 节点遍历
+16     // 文档处理
+17     // 样式操作
+18     // 属性操作
+19     // 事件体系
+20     // AJAX交互
+21     // 动画引擎
+22     return jQuery;
+23 }));
+任何库与框架设计的第一个要点就是解决命名空间与变量污染的问题。
+jQuery就是利用了JavaScript函数作用域的特性，
+采用立即调用表达式包裹了自身的方法来解决这个问题。
+window和undefined都是为了减少变量查找所经过的scope作用域。
+当window通过传递给闭包内部之后，在闭包内部使用它的时候，
+可以把它当成一个局部变量，显然比原先在window scope下查找的时候要快一些。
+为什么要传递undefined？
+Javascript 中的 undefined 并不是作为关键字，因此可以允许用户对其赋值。
+ 
+
+　　　jQuery使用()将匿名函数括起来，然后后面再加一对小括号（包含参数列表），那么这小括号能把我们的表达式组合分块，并且每一块（也就是每一对小括号），都有一个返             回值。这个返回值实际上也就是小括号中表达式的返回值。所以，当我们用一对小括号把匿名函数括起来的时候，实际上小括号返回的，就是一个匿名函数的Function对象。             因此，小括号对加上匿名函数就如同有名字的函数般被我们取得它的引用位置了。所以如果在这个引用变量后面再加上参数列表，就会实现普通函数的调用形式。
+
+ 
+
+ 
+
+　　　
+
+ 1 jQuery有3种针对文档加载的方法
+ 2 
+ 3 $(document).ready(function() {
+ 4     // ...代码...
+ 5 })
+ 6 //document ready 简写
+ 7 $(function() {
+ 8     // ...代码...
+ 9 })
+10 $(document).load(function() {
+11     // ...代码...
+12 })
+(1) 解析HTML结构。
+(2) 加载外部脚本和样式表文件。
+(3) 解析并执行脚本代码。
+(4) 构造HTML DOM模型。//ready
+(5) 加载图片等外部文件。
+(6) 页面加载完毕。//load
+    ready在第（4）步完成之后就执行了，但是load要在第（6）步完成之后才执行。
+
+　
+
+jQuery.ready.promise = function( obj ) {
+    if ( !readyList ) {
+        readyList = jQuery.Deferred();
+        if ( document.readyState === "complete" ) {
+            // Handle it asynchronously to allow scripts the opportunity     
+            //to delay ready
+            setTimeout( jQuery.ready );
+        } else {
+            document.addEventListener( "DOMContentLoaded", completed, false );
+            window.addEventListener( "load", completed, false );
+        }
+    }
+    return readyList.promise( obj );
+};    
+// Ensure firing before onload, maybe late but safe also for iframes
+document.attachEvent( "onreadystatechange", completed );
+// A fallback to window.onload, that will always work
+window.attachEvent( "onload", completed );
+// If IE and not a frame
+// continually check to see if the document is ready
+var top = false;
+try {
+    top = window.frameElement == null && document.documentElement;
+} catch(e) {}
+if ( top && top.doScroll ) {
+    (function doScrollCheck() {
+        if ( !jQuery.isReady ) {
+            try {
+                // Use the trick by Diego Perini
+                // http://javascript.nwbox.com/IEContentLoaded/
+                top.doScroll("left");
+            } catch(e) {
+                return setTimeout( doScrollCheck, 50 );
+            }
+            // detach all dom ready events
+            detach();
+
+            // and execute any waiting functions
+            jQuery.ready();
+        }
+    })();
+}
+ 如果浏览器存在 document.onreadystatechange 事件，
+
+当该事件触发时，如果 document.readyState=complete 的时候，可视为 DOM 树已经载入。
+
+不过，这个事件不太可靠，比如当页面中存在图片的时候，可能反而在 onload 事件之后才能触发
+
+针对IE的加载检测
+
+Diego Perini 在 2007 年的时候，报告了一种检测 IE 是否加载完成的方式，使用 doScroll 方法调用，详情可见http://javascript.nwbox.com/IEContentLoaded/。
+原理就是对于 IE 在非 iframe 内时，只有不断地通过能否执行 doScroll 判断 DOM 是否加载完毕。在上述中间隔 50 毫秒尝试去执行 doScroll，注意，由于页面没有加载完成的时候，调用 doScroll 会导致异常，所以使用了 try -catch 来捕获异常。
+结论：所以总的来说当页面 DOM 未加载完成时，调用 doScroll 方法时，会产生异常。那么我们反过来用，如果不异常，那么就是页面DOM加载完毕了。
+
+if ( document.readyState === "complete" ) {
+     // Handle it asynchronously to allow scripts the opportunity to delay ready
+     setTimeout( jQuery.ready );
+ }
+直接通过查看readyState的状态来确定页面的加载是否完成了。这里会给一个定时器的最小时间后去执行，主要保证执行的正确。
+
+Var _jQuery = window.jQuery,
+    _$ = window.$;
+
+jQuery.noConflict = function( deep ) {
+    if ( window.$ === jQuery ) {
+        window.$ = _$;
+    }
+if ( deep && window.jQuery === jQuery ) {
+        window.jQuery = _jQuery;
+    }
+    return jQuery;
+};
+    如果我们需要同时使用jQuery和其他JavaScript库，我们可以使用 $.noConflict()把$的控制权交给其他库。
+    旧引用的$ 被保存在jQuery的初始化; noConflict() 简单的恢复它们。
+    通过类似swap交换的概念，先把之前的存在的命名空间给缓存起来，
+通过对比当前的命名空间达到交换的目的，首先，我们先判断下当前的的$空间是不是被jQuery接管了，
+如果是则让出控制权给之前的_$引用的库，如果传入deep为true的话等于是把jQuery的控制权也让出去了。
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　(代码出自艾伦大大大大)
